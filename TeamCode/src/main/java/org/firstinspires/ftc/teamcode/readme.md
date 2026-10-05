@@ -19,7 +19,7 @@ You commit normally:
 ```bash
 git add .
 git commit -m "robot code update"
-git push origin main
+git push origin master
 ```
 
 This pushes to **your GitHub repo**, not the FTC SDK repo.
@@ -31,7 +31,7 @@ This pushes to **your GitHub repo**, not the FTC SDK repo.
 You pull from **upstream**, not origin:
 
 ```bash
-git pull upstream main
+git pull upstream master
 ```
 
 This brings in **only SDK changes**.  
@@ -46,7 +46,7 @@ If there are conflicts (only if you modified SDK files), Git will ask you to res
 If you want your GitHub fork to stay synced with upstream:
 
 ```bash
-git push origin main
+git push origin master
 ```
 
 This updates your fork with the new SDK + your robot code.
