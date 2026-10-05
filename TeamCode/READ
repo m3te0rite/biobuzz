@@ -1,0 +1,26 @@
+✔️ Your workflow from now on
+1. Write robot code
+You commit normally:
+
+bash
+git add .
+git commit -m "robot code update"
+git push origin main
+This pushes to your GitHub repo, not the FTC repo.
+
+2. When the SDK updates
+You pull from upstream, not origin:
+
+bash
+git pull upstream main
+This brings in ONLY SDK changes.
+Your TeamCode/ stays untouched.
+
+If there are conflicts (only if you modified SDK files), Git will ask you to resolve them manually.
+
+3. Keep your fork updated
+If you want your GitHub fork to stay synced with upstream:
+
+bash
+git push origin main
+This updates your fork with the new SDK + your robot code.
