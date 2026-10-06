@@ -51,6 +51,33 @@ git push origin master
 
 This updates your fork with the new SDK + your robot code.
 
+## Mecanum Drivebase
+
+The drivebase, along with future control system code, will be in `Teleop.java`. We currently use a mecanum drive configuration.
+
+### Controls:
+- **Left Joystick**: Movement
+  - Up: Move forward
+  - Down: Move backward
+  - Right: Strafe right
+  - Left: Strafe left
+  - Diagonal: Move diagonally
+  - Distance from center: Controls speed (proportional)
+
+- **Right Joystick**: Rotation
+  - Left: Rotate counterclockwise on central axis
+  - Right: Rotate clockwise on central axis
+  - Distance from center: Controls rotation speed (proportional)
+
+### Hardware Configuration:
+Ensure the following motor names are configured in the Robot Controller app:
+- front_left_motor
+- front_right_motor
+- back_left_motor
+- back_right_motor
+
+All other functionality (launcher, intake, servos) remains unchanged from the original StarterbotTeleop (Now in Teleop.java).
+
 ---
 
 # Creating Your Own OpModes

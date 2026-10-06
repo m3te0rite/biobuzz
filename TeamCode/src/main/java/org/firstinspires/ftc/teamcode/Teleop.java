@@ -1,30 +1,5 @@
-/*   MIT License
- *   Copyright (c) [2026] [Base 10 Assets, LLC]
- *
- *   Permission is hereby granted, free of charge, to any person obtaining a copy
- *   of this software and associated documentation files (the "Software"), to deal
- *   in the Software without restriction, including without limitation the rights
- *   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- *   copies of the Software, and to permit persons to whom the Software is
- *   furnished to do so, subject to the following conditions:
-
- *   The above copyright notice and this permission notice shall be included in all
- *   copies or substantial portions of the Software.
-
- *   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- *   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- *   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- *   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- *   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- *   SOFTWARE.
- */
-
-
 package org.firstinspires.ftc.teamcode;
-
 import static com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior.BRAKE;
-
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -33,10 +8,9 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
-
 /*
  * This file includes a teleop (driver-controlled) file for the goBILDA® StarterBot for the
- * 2026-2027 FIRST® Tech Challenge. It leverages a differential/Skid-Steer system for robot mobility,
+ * 2026-2027 FIRST® Tech Challenge. It leverages a mecanum drive system for robot mobility,
  * one motor driving an intake roller, two servos which pull elements out of corners, and a high-speed
  * launcher motor.
  *
@@ -49,13 +23,15 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
  * we will also need to adjust the "PIDF" coefficients with some that are a better fit for our application.
  */
 
-@TeleOp(name = "BioBuzz StarterBot Teleop", group = "StarterBot")
+@TeleOp(name = "BioBuzz Mecanum Teleop", group = "StarterBot")
 //@Disabled
-public class StarterbotTeleop extends OpMode {
+public class Teleop extends OpMode {
 
     // Declare OpMode members.
-    private DcMotor leftDrive = null;
-    private DcMotor rightDrive = null;
+    private DcMotor frontLeft = null;
+    private DcMotor frontRight = null;
+    private DcMotor backLeft = null;
+    private DcMotor backRight = null;
     private DcMotorEx launcher = null;
     private DcMotor intake = null;
     private CRServo leftIntakeServo = null;
@@ -76,12 +52,13 @@ public class StarterbotTeleop extends OpMode {
     public final int LAUNCHER_MIN_VELOCITY = 1200;
 
     /*
-     * These two variables store the power we need to apply to the motors. In other cases, we may
-     * choose to declare these variables inside the arcadeDrive() function, instead we declare them
+     * These variables store the power we need to apply to the motors. We declare them
      * here so that we can access them in our main loop for telemetry.
      */
-    double leftPower;
-    double rightPower;
+    double frontLeftPower;
+    double frontRightPower;
+    double backLeftPower;
+    double backRightPower;
 
     // Create a variable to set to the intake.
     double intakePower;
@@ -97,8 +74,10 @@ public class StarterbotTeleop extends OpMode {
          * to 'get' must correspond to the names assigned during the robot configuration
          * step.
          */
-        leftDrive = hardwareMap.get(DcMotor.class, "left_drive");
-        rightDrive = hardwareMap.get(DcMotor.class, "right_drive");
+        frontLeft = hardwareMap.get(DcMotor.class, "front_left_motor");
+        frontRight = hardwareMap.get(DcMotor.class, "front_right_motor");
+        backLeft = hardwareMap.get(DcMotor.class, "back_left_motor");
+        backRight = hardwareMap.get(DcMotor.class, "back_right_motor");
         intake = hardwareMap.get(DcMotor.class, "intake");
         launcher = hardwareMap.get(DcMotorEx.class, "launcher");
         windmillServo = hardwareMap.get(CRServo.class, "windmill");
@@ -106,22 +85,23 @@ public class StarterbotTeleop extends OpMode {
         rightIntakeServo = hardwareMap.get(CRServo.class, "right_intake_servo");
 
         /*
-         * To drive forward, most robots need the motor on one side to be reversed,
-         * because the axles point in opposite directions. Pushing the left stick forward
-         * MUST make robot go forward. So adjust these two lines based on your first test drive.
-         * Note: The settings here assume direct drive on left and right wheels. Gear
-         * Reduction or 90 Deg drives may require direction flips
+         * Set motor directions for mecanum drive.
+         * Adjust these based on your robot's actual wheel orientation.
          */
-        leftDrive.setDirection(DcMotor.Direction.FORWARD);
-        rightDrive.setDirection(DcMotor.Direction.REVERSE);
+        frontLeft.setDirection(DcMotor.Direction.FORWARD);
+        frontRight.setDirection(DcMotor.Direction.REVERSE);
+        backLeft.setDirection(DcMotor.Direction.FORWARD);
+        backRight.setDirection(DcMotor.Direction.REVERSE);
 
         /*
          * Setting zeroPowerBehavior to BRAKE enables a "brake mode". This causes the motor to
          * slow down much faster when it is coasting. This creates a much more controllable
          * drivetrain. As the robot stops much quicker.
          */
-        leftDrive.setZeroPowerBehavior(BRAKE);
-        rightDrive.setZeroPowerBehavior(BRAKE);
+        frontLeft.setZeroPowerBehavior(BRAKE);
+        frontRight.setZeroPowerBehavior(BRAKE);
+        backLeft.setZeroPowerBehavior(BRAKE);
+        backRight.setZeroPowerBehavior(BRAKE);
         intake.setZeroPowerBehavior(BRAKE);
 
         /*
@@ -175,15 +155,13 @@ public class StarterbotTeleop extends OpMode {
     @Override
     public void loop() {
         /*
-         * Here we call a function called arcadeDrive. The arcadeDrive function takes the input from
-         * the joysticks, and applies power to the left and right drive motor to move the robot
-         * as requested by the driver. "arcade" refers to the control style we're using here.
-         * Much like a classic arcade game, when you move the left joystick forward both motors
-         * work to drive the robot forward, and when you move the right joystick left and right
-         * both motors work to rotate the robot. Combinations of these inputs can be used to create
-         * more complex maneuvers.
+         * Here we call a function called mecanumDrive. The mecanumDrive function takes the input from
+         * the joysticks, and applies power to the four mecanum drive motors to move the robot
+         * as requested by the driver.
+         * Left joystick controls movement (forward/backward + strafe)
+         * Right joystick controls rotation
          */
-        arcadeDrive(-gamepad1.left_stick_y, gamepad1.right_stick_x);
+        mecanumDrive(-gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
 
         /*
          * Set the intake power variable to equal the right trigger, minus the left trigger.
@@ -219,7 +197,8 @@ public class StarterbotTeleop extends OpMode {
         /*
          * Show motor powers on the Driver Station via telemetry.
          */
-        telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
+        telemetry.addData("Motors", "FL (%.2f), FR (%.2f), BL (%.2f), BR (%.2f)", 
+            frontLeftPower, frontRightPower, backLeftPower, backRightPower);
         telemetry.addLine();
 
     }
@@ -231,15 +210,42 @@ public class StarterbotTeleop extends OpMode {
     public void stop() {
     }
 
-    void arcadeDrive(double forward, double rotate) {
-        leftPower = forward + rotate;
-        rightPower = forward - rotate;
+    void mecanumDrive(double forward, double strafe, double rotate) {
+        /*
+         * Calculate mecanum drive powers
+         * Mecanum drive equations for standard wheel configuration:
+         * frontLeft  = forward + strafe + rotate
+         * frontRight = forward - strafe - rotate
+         * backLeft   = forward - strafe + rotate
+         * backRight  = forward + strafe - rotate
+         */
+        frontLeftPower = forward + strafe + rotate;
+        frontRightPower = forward - strafe - rotate;
+        backLeftPower = forward - strafe + rotate;
+        backRightPower = forward + strafe - rotate;
+
+        /*
+         * Normalize powers if any motor exceeds 1.0 to maintain direction
+         */
+        double maxPower = Math.max(
+            Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower)),
+            Math.max(Math.abs(backLeftPower), Math.abs(backRightPower))
+        );
+        
+        if (maxPower > 1.0) {
+            frontLeftPower /= maxPower;
+            frontRightPower /= maxPower;
+            backLeftPower /= maxPower;
+            backRightPower /= maxPower;
+        }
 
         /*
          * Send calculated power to motors
          */
-        leftDrive.setPower(leftPower);
-        rightDrive.setPower(rightPower);
+        frontLeft.setPower(frontLeftPower);
+        frontRight.setPower(frontRightPower);
+        backLeft.setPower(backLeftPower);
+        backRight.setPower(backRightPower);
     }
 
     void launch() {
