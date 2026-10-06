@@ -24,6 +24,12 @@ git push origin master
 
 This pushes to **your GitHub repo**, not the FTC SDK repo.
 
+**You might get a warning like**
+
+``` warning: in the working copy of 'TeamCode/src/main/java/org/firstinspires/ftc/teamcode/Teleop.java', LF will be replaced by CRLF the next time Git touches it```
+
+This just means that the file uses Unix line endings (LF) but Windows will use Windows line endings (CRLF). This is normal and can be ignored.
+
 ---
 
 ## 2. When the SDK updates
@@ -51,11 +57,12 @@ git push origin master
 
 This updates your fork with the new SDK + your robot code.
 
-## Mecanum Drivebase
+## Control Systems/Code
 
 The drivebase, along with future control system code, will be in `Teleop.java`. We currently use a mecanum drive configuration.
 
-### Controls:
+## Drivebase controls are as follows:
+
 - **Left Joystick**: Movement
   - Up: Move forward
   - Down: Move backward
@@ -69,7 +76,11 @@ The drivebase, along with future control system code, will be in `Teleop.java`. 
   - Right: Rotate clockwise on central axis
   - Distance from center: Controls rotation speed (proportional)
 
-### Hardware Configuration:
+## Autonomus System:
+
+The autonomus system will be in `Auto.java`. This will be used to run autonomous routines. Right now, there isn't any code in there, but it will be used in the future.
+
+## Hardware Configuration:
 Ensure the following motor names are configured in the Robot Controller app:
 - front_left_motor
 - front_right_motor
